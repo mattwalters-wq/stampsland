@@ -1,19 +1,30 @@
 # stamps land
 
-Community app prototype for The Stamps - Sofia, Scarlett & Rubina.
+Community app for The Stamps - Sofia, Scarlett & Rubina.
 
-## Features
-- Community feed with fan posts and band updates
-- Individual member feeds (Sofia, Scarlett, Rubina)
-- Full 2026 AU/EU/UK tour dates with ticket links
-- Stamps reward system (First Press > B-Side > Deep Cut > Inner Sleeve > Stamped)
-- Exclusive gated content for top-level fans
-- Fan meetup crews for tour cities
+## Setup
+
+### 1. Create a Supabase project
+- Go to [supabase.com](https://supabase.com) and create a new project
+- Go to SQL Editor and run `supabase-schema.sql`
+- Go to Authentication > Providers and enable Google (optional)
+
+### 2. Environment variables
+- Copy `.env.local.example` to `.env.local`
+- Fill in your Supabase URL and anon key from Settings > API
+
+### 3. Run locally
+```
+npm install
+npm run dev
+```
+
+### 4. Deploy to Vercel
+- Push to GitHub
+- Import in Vercel
+- Add environment variables in Vercel project settings
 
 ## Tech
 - Next.js 14
-- React 18
+- Supabase (auth, database, storage)
 - Deployed on Vercel
-
-## Status
-Frontend prototype - no backend yet. Hardcoded data for feedback and iteration.
