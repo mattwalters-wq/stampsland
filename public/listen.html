@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Listen · The Stamps</title>
+  <meta name="description" content="New songs from The Stamps.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1a1a1a;
+      --cream: #F5F0E8;
+      --rust: #C45D3E;
+      --sage: #7D8B6A;
+      --slate: #5A5A6E;
+      --off-white: #FAF8F4;
+      --dark-cream: #EDE6D8;
+      --dusty-rose: #C49B9B;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--cream);
+      color: var(--ink);
+      font-family: 'DM Sans', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 640px; margin: 0 auto; padding: 48px 16px 160px; }
+    header { margin-bottom: 32px; }
+    .eyebrow {
+      font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--rust); font-weight: 700; margin-bottom: 8px;
+    }
+    h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+    .sub { color: var(--slate); margin-top: 10px; font-size: 15px; }
+    .back { display: inline-block; margin-bottom: 28px; color: var(--slate); text-decoration: none; font-size: 14px; }
+    .back:hover { color: var(--ink); }
+
+    .tracks { list-style: none; }
+    .track {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 12px; border-radius: 12px;
+      cursor: pointer; transition: background .15s;
+      border-bottom: 1px solid var(--dark-cream);
+    }
+    .track:hover { background: var(--off-white); }
+    .track.active { background: var(--off-white); }
+    .track .num {
+      width: 28px; text-align: right; font-variant-numeric: tabular-nums;
+      color: var(--slate); font-size: 14px; flex-shrink: 0;
+    }
+    .track.active .num { color: var(--rust); }
+    .track .btn {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      border: 1.5px solid var(--ink); background: transparent; color: var(--ink);
+      display: grid; place-items: center; cursor: pointer;
+    }
+    .track.active .btn { background: var(--rust); border-color: var(--rust); color: #fff; }
+    .track .btn svg { width: 14px; height: 14px; fill: currentColor; }
+    .track .title { flex: 1; font-weight: 500; font-size: 16px; }
+    .track .dur { color: var(--slate); font-size: 13px; font-variant-numeric: tabular-nums; }
+
+    /* sticky player */
+    .player {
+      position: fixed; left: 0; right: 0; bottom: 0;
+      background: var(--off-white); border-top: 1px solid var(--dark-cream);
+      padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+      transform: translateY(110%); transition: transform .25s ease;
+    }
+    .player.show { transform: translateY(0); }
+    .player-inner { max-width: 640px; margin: 0 auto; }
+    .now { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .now .btn {
+      width: 44px; height: 44px; border-radius: 50%; border: none;
+      background: var(--rust); color: #fff; display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
+    }
+    .now .btn svg { width: 16px; height: 16px; fill: currentColor; }
+    .now .skip {
+      width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--ink);
+      background: transparent; color: var(--ink); display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
+    }
+    .now .skip svg { width: 14px; height: 14px; fill: currentColor; }
+    .now .meta { flex: 1; min-width: 0; }
+    .now .meta .t { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .now .meta .a { color: var(--slate); font-size: 13px; }
+    .bar { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--slate); font-variant-numeric: tabular-nums; }
+    .bar input[type=range] { flex: 1; accent-color: var(--rust); height: 4px; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="/">← stamps land</a>
+    <header>
+      <div class="eyebrow">New songs</div>
+      <h1>Listen</h1>
+      <p class="sub">Twelve new ones. Play them in order or jump around.</p>
+    </header>
+
+    <ol class="tracks" id="tracks"></ol>
+  </div>
+
+  <div class="player" id="player">
+    <div class="player-inner">
+      <div class="now">
+        <button class="skip" id="prev" aria-label="Previous">
+          <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+        </button>
+        <button class="btn" id="toggle" aria-label="Play or pause">
+          <svg id="icon-play" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <svg id="icon-pause" class="hidden" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+        </button>
+        <button class="skip" id="next" aria-label="Next">
+          <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6h2v12h-2z"/></svg>
+        </button>
+        <div class="meta">
+          <div class="t" id="now-title">—</div>
+          <div class="a">The Stamps</div>
+        </div>
+      </div>
+      <div class="bar">
+        <span id="cur">0:00</span>
+        <input type="range" id="seek" min="0" max="1000" value="0" aria-label="Seek">
+        <span id="tot">0:00</span>
+      </div>
+    </div>
+  </div>
+
+  <audio id="audio" preload="metadata"></audio>
+
+  <script>
+    // Add new tracks here in order. Files live in /audio/.
+    const TRACKS = [
+      { n: "01", title: "Cry Like A Man",           src: "/audio/01-cry-like-a-man.mp3" },
+      { n: "02", title: "Not The Loving Kind",      src: "/audio/02-not-the-loving-kind.mp3" },
+      { n: "03", title: "Live Another Day",         src: "/audio/03-live-another-day.mp3" },
+      { n: "04", title: "Charlie Plays Rock Guitar", src: "/audio/04-charlie-plays-rock-guitar.mp3" },
+      { n: "05", title: "My Own People",            src: "/audio/05-my-own-people.mp3" },
+      { n: "06", title: "Girl Without Your Affection", src: "/audio/06-girl-without-your-affection.mp3" },
+      { n: "07", title: "What It Takes To Survive",  src: "/audio/07-what-it-takes-to-survive.mp3" },
+      { n: "08", title: "Send Yourself To God",      src: "/audio/08-send-yourself-to-god.mp3" },
+      { n: "09", title: "I'll Be The Sun Setting In Your Sea", src: "/audio/09-ill-be-the-sun-setting-in-your-sea.mp3" },
+      { n: "10", title: "Learn Our Names",           src: "/audio/10-learn-our-names.mp3" },
+      { n: "11", title: "Saw Your Mother In The Grocery Line", src: "/audio/11-saw-your-mother-in-the-grocery-line.mp3" },
+      { n: "12", title: "Spill My Guts",             src: "/audio/12-spill-my-guts.mp3" },
+    ];
+
+    const audio = document.getElementById("audio");
+    const list = document.getElementById("tracks");
+    const player = document.getElementById("player");
+    const toggle = document.getElementById("toggle");
+    const iconPlay = document.getElementById("icon-play");
+    const iconPause = document.getElementById("icon-pause");
+    const nowTitle = document.getElementById("now-title");
+    const seek = document.getElementById("seek");
+    const cur = document.getElementById("cur");
+    const tot = document.getElementById("tot");
+    let current = -1;
+    let seeking = false;
+
+    const fmt = s => isFinite(s) ? Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0") : "0:00";
+
+    TRACKS.forEach((t, i) => {
+      const li = document.createElement("li");
+      li.className = "track";
+      li.innerHTML = `
+        <span class="num">${t.n}</span>
+        <button class="btn" aria-label="Play ${t.title}"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
+        <span class="title">${t.title}</span>
+        <span class="dur" data-dur></span>`;
+      li.addEventListener("click", () => (i === current ? togglePlay() : play(i)));
+      list.appendChild(li);
+
+      // Fetch duration without loading the whole file
+      const probe = new Audio();
+      probe.preload = "metadata";
+      probe.src = t.src;
+      probe.addEventListener("loadedmetadata", () => {
+        li.querySelector("[data-dur]").textContent = fmt(probe.duration);
+      });
+    });
+
+    function play(i) {
+      current = i;
+      audio.src = TRACKS[i].src;
+      audio.play();
+      nowTitle.textContent = TRACKS[i].n + " · " + TRACKS[i].title;
+      player.classList.add("show");
+      [...list.children].forEach((li, k) => li.classList.toggle("active", k === i));
+      setIcons();
+    }
+    function togglePlay() {
+      if (current < 0) return play(0);
+      audio.paused ? audio.play() : audio.pause();
+    }
+    function setIcons() {
+      const playing = !audio.paused;
+      iconPlay.classList.toggle("hidden", playing);
+      iconPause.classList.toggle("hidden", !playing);
+      [...list.children].forEach((li, k) => {
+        li.querySelector(".btn").innerHTML = (k === current && playing)
+          ? '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
+          : '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+      });
+    }
+
+    toggle.addEventListener("click", togglePlay);
+    document.getElementById("next").addEventListener("click", () => play((current + 1) % TRACKS.length));
+    document.getElementById("prev").addEventListener("click", () => {
+      if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+      play((current - 1 + TRACKS.length) % TRACKS.length);
+    });
+    audio.addEventListener("play", setIcons);
+    audio.addEventListener("pause", setIcons);
+    audio.addEventListener("ended", () => {
+      if (current < TRACKS.length - 1) play(current + 1); else setIcons();
+    });
+    audio.addEventListener("loadedmetadata", () => { tot.textContent = fmt(audio.duration); });
+    audio.addEventListener("timeupdate", () => {
+      cur.textContent = fmt(audio.currentTime);
+      if (!seeking && audio.duration) seek.value = Math.round(audio.currentTime / audio.duration * 1000);
+    });
+    seek.addEventListener("input", () => { seeking = true; cur.textContent = fmt(seek.value / 1000 * (audio.duration || 0)); });
+    seek.addEventListener("change", () => { seeking = false; if (audio.duration) audio.currentTime = seek.value / 1000 * audio.duration; });
+    document.addEventListener("keydown", e => {
+      if (e.code === "Space" && e.target === document.body) { e.preventDefault(); togglePlay(); }
+    });
+  </script>
+</body>
+</html>
