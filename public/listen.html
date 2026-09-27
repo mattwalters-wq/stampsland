@@ -7,7 +7,7 @@
   <meta name="description" content="New songs from The Stamps.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <style>
     :root {
       --ink: #1a1a1a;
@@ -23,7 +23,7 @@
     body {
       background: var(--cream);
       color: var(--ink);
-      font-family: 'DM Sans', sans-serif;
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
       -webkit-font-smoothing: antialiased;
       min-height: 100vh;
     }
@@ -128,23 +128,24 @@
     </div>
   </div>
 
-  <audio id="audio" preload="metadata"></audio>
+  <audio id="audio" preload="none"></audio>
 
   <script>
-    // Add new tracks here in order. Files live in /audio/.
+    // Add new tracks here in order. Files live in /audio/ (128k MP3).
+    // dur is hardcoded so the page never has to hit the audio files to show it.
     const TRACKS = [
-      { n: "01", title: "Cry Like A Man",           src: "/audio/01-cry-like-a-man.mp3" },
-      { n: "02", title: "Not The Loving Kind",      src: "/audio/02-not-the-loving-kind.mp3" },
-      { n: "03", title: "Live Another Day",         src: "/audio/03-live-another-day.mp3" },
-      { n: "04", title: "Charlie Plays Rock Guitar", src: "/audio/04-charlie-plays-rock-guitar.mp3" },
-      { n: "05", title: "My Own People",            src: "/audio/05-my-own-people.mp3" },
-      { n: "06", title: "Girl Without Your Affection", src: "/audio/06-girl-without-your-affection.mp3" },
-      { n: "07", title: "What It Takes To Survive",  src: "/audio/07-what-it-takes-to-survive.mp3" },
-      { n: "08", title: "Send Yourself To God",      src: "/audio/08-send-yourself-to-god.mp3" },
-      { n: "09", title: "I'll Be The Sun Setting In Your Sea", src: "/audio/09-ill-be-the-sun-setting-in-your-sea.mp3" },
-      { n: "10", title: "Learn Our Names",           src: "/audio/10-learn-our-names.mp3" },
-      { n: "11", title: "Saw Your Mother In The Grocery Line", src: "/audio/11-saw-your-mother-in-the-grocery-line.mp3" },
-      { n: "12", title: "Spill My Guts",             src: "/audio/12-spill-my-guts.mp3" },
+      { n: "01", title: "Cry Like A Man",           src: "/audio/01-cry-like-a-man.mp3", dur: "2:57" },
+      { n: "02", title: "Not The Loving Kind",      src: "/audio/02-not-the-loving-kind.mp3", dur: "2:08" },
+      { n: "03", title: "Live Another Day",         src: "/audio/03-live-another-day.mp3", dur: "2:38" },
+      { n: "04", title: "Charlie Plays Rock Guitar", src: "/audio/04-charlie-plays-rock-guitar.mp3", dur: "3:55" },
+      { n: "05", title: "My Own People",            src: "/audio/05-my-own-people.mp3", dur: "2:34" },
+      { n: "06", title: "Girl Without Your Affection", src: "/audio/06-girl-without-your-affection.mp3", dur: "3:13" },
+      { n: "07", title: "What It Takes To Survive",  src: "/audio/07-what-it-takes-to-survive.mp3", dur: "2:43" },
+      { n: "08", title: "Send Yourself To God",      src: "/audio/08-send-yourself-to-god.mp3", dur: "2:49" },
+      { n: "09", title: "I'll Be The Sun Setting In Your Sea", src: "/audio/09-ill-be-the-sun-setting-in-your-sea.mp3", dur: "2:29" },
+      { n: "10", title: "Learn Our Names",           src: "/audio/10-learn-our-names.mp3", dur: "3:10" },
+      { n: "11", title: "Saw Your Mother In The Grocery Line", src: "/audio/11-saw-your-mother-in-the-grocery-line.mp3", dur: "3:19" },
+      { n: "12", title: "Spill My Guts",             src: "/audio/12-spill-my-guts.mp3", dur: "2:53" },
     ];
 
     const audio = document.getElementById("audio");
@@ -169,17 +170,18 @@
         <span class="num">${t.n}</span>
         <button class="btn" aria-label="Play ${t.title}"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>
         <span class="title">${t.title}</span>
-        <span class="dur" data-dur></span>`;
+        <span class="dur">${t.dur}</span>`;
       li.addEventListener("click", () => (i === current ? togglePlay() : play(i)));
       list.appendChild(li);
+    });
 
-      // Fetch duration without loading the whole file
-      const probe = new Audio();
-      probe.preload = "metadata";
-      probe.src = t.src;
-      probe.addEventListener("loadedmetadata", () => {
-        li.querySelector("[data-dur]").textContent = fmt(probe.duration);
-      });
+    // Warm up the next track once the current one has buffered, so skipping is instant.
+    const nextBuf = new Audio();
+    nextBuf.preload = "auto";
+    audio.addEventListener("canplaythrough", () => {
+      if (current < 0) return;
+      const n = TRACKS[(current + 1) % TRACKS.length].src;
+      if (!nextBuf.src.endsWith(n)) nextBuf.src = n;
     });
 
     function play(i) {

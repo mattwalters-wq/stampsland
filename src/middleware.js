@@ -40,8 +40,9 @@ export async function middleware(request) {
   return supabaseResponse;
 }
 
+// Only run on protected routes. Running this everywhere meant a Supabase
+// round-trip before every page, audio file and asset was served. The browser
+// client refreshes the session on its own for public pages.
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+  matcher: ["/dashboard/:path*"],
 };

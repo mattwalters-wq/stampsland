@@ -7,6 +7,16 @@ const nextConfig = {
       { protocol: "https", hostname: "lh3.googleusercontent.com" },
     ],
   },
+  async headers() {
+    return [
+      {
+        source: "/audio/:file*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=2592000" },
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
